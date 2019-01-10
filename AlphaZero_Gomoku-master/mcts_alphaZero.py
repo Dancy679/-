@@ -9,7 +9,6 @@ network to guide the tree search and evaluate the leaf nodes
 import numpy as np
 import copy
 
-
 def softmax(x):
     probs = np.exp(x - np.max(x))
     probs /= np.sum(probs)
@@ -18,7 +17,6 @@ def softmax(x):
 
 class TreeNode(object):
     """A node in the MCTS tree.
-
     Each node keeps track of its own value Q, prior probability P, and
     its visit-count-adjusted prior score u.
     """
