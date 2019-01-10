@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-A pure implementation of the Monte Carlo Tree Search (MCTS)
-
-@author: 某科学的软工小队
-"""
 
 import numpy as np
 import copy
@@ -34,8 +29,8 @@ class TreeNode(object):
         self._parent = parent
         self._children = {}  # a map from action to TreeNode
         self._n_visits = 0
-        self._Q = 0
-        self._u = 0
+        self._Q = 0          # action value
+        self._u = 0          # award
         self._P = prior_p
 
     def expand(self, action_priors):
@@ -119,7 +114,6 @@ class MCTS(object):
         node = self._root
         while(1):
             if node.is_leaf():
-
                 break
             # Greedily select next move.
             action, node = node.select(self._c_puct)
