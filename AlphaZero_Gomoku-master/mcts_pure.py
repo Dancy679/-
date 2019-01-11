@@ -6,16 +6,11 @@ from operator import itemgetter
 
 
 def rollout_policy_fn(board):
-    """a coarse, fast version of policy_fn used in the rollout phase."""
-    # rollout randomly
     action_probs = np.random.rand(len(board.availables))
     return zip(board.availables, action_probs)
 
 
 def policy_value_fn(board):
-    """a function that takes in a state and outputs a list of (action, probability)
-    tuples and a score for the state"""
-    # return uniform probabilities and 0 score for pure MCTS
     action_probs = np.ones(len(board.availables))/len(board.availables)
     return zip(board.availables, action_probs), 0
 

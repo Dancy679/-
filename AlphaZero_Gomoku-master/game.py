@@ -1,17 +1,12 @@
 # -*- coding: utf-8 -*-
-"""
-@author: 某科学的软工小队
-"""
 
 from __future__ import print_function
-from Graphic import Graphic
 import numpy as np
-import threading
+import operator
 
 
 class Board(object):
     """board for the game"""
-
     def __init__(self, **kwargs):
         self.width = int(kwargs.get('width', 10))
         self.height = int(kwargs.get('height', 10))
@@ -34,15 +29,8 @@ class Board(object):
         self.last_move = -1
 
     def move_to_location(self, move):
-        """
-        3*3 board's moves like:
-        6 7 8
-        3 4 5
-        0 1 2
-        and move 5's location is (1,2)
-        """
         h = move // self.width
-        w = move % self.width
+        w = move % self.height
         return [h, w]
 
     def location_to_move(self, location):
@@ -56,10 +44,6 @@ class Board(object):
         return move
 
     def current_state(self):
-        """return the board state from the perspective of the current player.
-        state shape: 4*width*height
-        """
-
         square_state = np.zeros((4, self.width, self.height))
         if self.states:
             moves, players = np.array(list(zip(*self.states.items())))
@@ -69,11 +53,11 @@ class Board(object):
                             move_curr % self.height] = 1.0
             square_state[1][move_oppo // self.width,
                             move_oppo % self.height] = 1.0
-            # indicate the last move location
+            # indicate the last move of opponent location
             square_state[2][self.last_move // self.width,
                             self.last_move % self.height] = 1.0
         if len(self.states) % 2 == 0:
-            square_state[3][:, :] = 1.0  # indicate the colour to play
+            square_state[3][:, :] = 1.0  # indicate whether the current player is the first player
         return square_state[:, ::-1, :]
 
     def do_move(self, move):
@@ -119,7 +103,6 @@ class Board(object):
         return False, -1
 
     def game_end(self):
-        """Check whether the game is ended or not"""
         win, winner = self.has_a_winner()
         if win:
             return True, winner
@@ -132,7 +115,6 @@ class Board(object):
 
 
 class Game(object):
-    """game server"""
 
     def __init__(self, board, **kwargs):
         self.board = board
@@ -185,8 +167,14 @@ class Game(object):
                 if is_shown:
                     if winner != -1:
                         print("Game end. Winner is", players[winner])
+                        if operator.eq(players[winner], players[2]):
+                            graphic.message_diaplay('Game end. AI win')
+                        else:
+                            graphic.message_diaplay('Game end. You win')
                     else:
                         print("Game end. Tie")
+                        graphic.message_diaplay('Game end. Tie')
+                        # time.sleep(10)
                 return winner
 
     def start_self_play(self, player, is_shown=0, temp=1e-3):
