@@ -3,7 +3,7 @@ from pygame.locals import *
 from sys import exit
 from Rules import GameStatus
 from tkinter import *
-
+import time
 
 class Graphic():
     black = []
@@ -20,12 +20,30 @@ class Graphic():
     ipre = -1
     jpre = -1
     mouse = 0
+    display_width = 660
+    display_height = 660
+    gameDisplay = pygame.display.set_mode((display_width, display_height))
+    display_result = 0
 
     def input(self):
         # print(i, j)
         while True:
             if self.mouse != 0:
                 return self.i, self.j
+
+    def text_objects(self, text, font):
+        black = (0,0,0)
+        textSurface = font.render(text, True, black)
+        return textSurface, textSurface.get_rect()
+
+    def message_diaplay(self, text):
+        largeText = pygame.font.Font('freesansbold.ttf', 49)
+        TextSurf, TextRect = self.text_objects(text, largeText)
+        TextRect.center = ((self.display_width / 2), (self.display_height / 2))
+        self.gameDisplay.blit(TextSurf, TextRect)
+        self.display_result = 1
+        pygame.display.update()
+        time.sleep(100)
 
     def run(self):
         while True:
@@ -36,6 +54,7 @@ class Graphic():
             self.mouse = 0
             pressed_mouse = pygame.mouse.get_pressed()
 
+
             if pressed_mouse[0]:
                 self.mouse = 1
                 x, y = pygame.mouse.get_pos()
@@ -43,12 +62,6 @@ class Graphic():
                 i_tmp=10-i_tmp
                 j_tmp = j_tmp - 1
                 In = self.array2index((i_tmp, j_tmp))
-                # print("hahahha")
-                '''
-                if In != Inpre:
-                    print (In)
-                    # input()
-                '''
                 self.Inpre = In
 
                 if i_tmp in range(0, 10) and j_tmp in range(0, 10):
@@ -56,18 +69,8 @@ class Graphic():
                     self.j = j_tmp
                 if ((In not in self.black) and (In not in self.white)):
                     self.black.append(In)
-                 # print(i)
-                 # print(j)
-                '''
-                if self.i != self.ipre or self.j != self.jpre:
-                    print(self.i, self.j)
-                    # input()
-                ipre, jpre = [self.i, self.j]
-                '''
-
 
             if not self.i is None and not self.j is None:
-               #px, py = 60+(j - 1) * d, 60+ (i - 1) * d
                if (self.j) == 0:
                    px, py = 60, 60 + (self.i - 1) * self.d
                    py = 660 - py
@@ -78,9 +81,11 @@ class Graphic():
             # 绘制背景和棋子
             self.status.draw_background()
             self.status.draw_pieces()
+            # self.message_diaplay('hahaha')
 
             # 刷新一下画面
-            pygame.display.update()
+            if self.display_result == 0 :
+                pygame.display.update()
 
 
 if __name__ == '__main__':

@@ -5,14 +5,15 @@ imagePath = './Picture/'
 
 d = 60
 
+
 def array2index(array):
     return (array[0]-1)*10+array[1]
 
+
 def index2array(index):
     l=index % 10
-    #if l==0:
-        #l=10
     return (index-l)/10+1,l
+
 
 def array2pixel(array):
     if(array[0])==0:
@@ -23,6 +24,7 @@ def array2pixel(array):
         px, py = 120+ (array[1] - 1) * d, 60 + (array[0] - 1) * d
         py= 660-py
     return px,py
+
 
 class GameStatus(object):
     def __init__(self):

@@ -31,15 +31,11 @@ class Human(object):
     def get_action(self, board):
         try:
             # location = input("Your move: ")
-            # print(self.graphic.input())
-            # a, b = self.graphic.input()
-            # print(a, b)
-            # location = a, b
             print("is your turns")
             location = self.graphic.input()
             print(location)
             if isinstance(location, str):
-                location = [int(n, 10) for n in location.split(",")]  # for python3
+                location = [int(n, 10) for n in location.split(",")]
             move = board.location_to_move(location)
         except Exception as e:
             move = -1
@@ -64,23 +60,14 @@ def run():
         print(1111)
         # thread1 = threading.Thread(target=graphic.run, args=())
         best_policy = PolicyValueNet(width, height, model_file='./model/' + model_file)
-        mcts_player = MCTSPlayer(best_policy.policy_value_fn, c_puct=5, n_playout=1000)
-        print("hhh")
+        mcts_player = MCTSPlayer(best_policy.policy_value_fn, c_puct=5, n_playout=200)
         human = Human(graphic)
         # set start_player=0 for human first
         thread2 = threading.Thread(target=game.start_play, args=(human, mcts_player, graphic, 1, 1))
         # game.start_play(human, mcts_player, graphic, start_player=0, is_shown=1)
-        # thread1.setDaemon(True)
-        # thread1.start()
         thread2.setDaemon(True)
         thread2.start()
         graphic.run()
-        # thread1.join()
-        # thread2.join()
-        # game.start_play(human, mcts_player, graphic, start_player=0, is_shown=1)
-
-        # thread.start_new_thread(game.start_play, (human, mcts_player, graphic, 0, 1))
-        # thread.start_new_thread(graphic.run, ())
     except KeyboardInterrupt:
         print('\n\rquit')
 

@@ -76,7 +76,7 @@ class TrainPipeline():
         return extend_data
 
     def collect_selfplay_data(self, n_games=1):
-        """collect self-play data for training"""
+        # collect self-play data for training
         for i in range(n_games):
             winner, play_data = self.game.start_self_play(self.mcts_player,
                                                           temp=self.temp)
@@ -87,7 +87,7 @@ class TrainPipeline():
             self.data_buffer.extend(play_data)
 
     def policy_update(self):
-        """update the policy-value net"""
+        # update the policy-value net
         mini_batch = random.sample(self.data_buffer, self.batch_size)
         state_batch = [data[0] for data in mini_batch]
         mcts_probs_batch = [data[1] for data in mini_batch]
@@ -133,10 +133,7 @@ class TrainPipeline():
         return loss, entropy
 
     def policy_evaluate(self, n_games=10):
-        """
-        Evaluate the trained policy by playing against the pure MCTS player
-        Note: this is only for monitoring the progress of training
-        """
+
         current_mcts_player = MCTSPlayer(self.policy_value_net.policy_value_fn,
                                          c_puct=self.c_puct,
                                          n_playout=self.n_playout)
@@ -156,7 +153,6 @@ class TrainPipeline():
         return win_ratio
 
     def run(self):
-        """run the training pipeline"""
         try:
             for i in range(self.game_batch_num):
                 self.collect_selfplay_data(self.play_batch_size)
@@ -168,15 +164,13 @@ class TrainPipeline():
                 # and save the model params
                 if (i+1) % self.check_freq == 0:
                     print("current self-play batch: {}".format(i+1))
-                    # win_ratio = self.policy_evaluate()
-                    print("111")
+                    win_ratio = self.policy_evaluate()
                     self.policy_value_net.save_model('model/current_policy.model')
-                    print("222")
                     if win_ratio > self.best_win_ratio:
-                        print("New best policy!!!!!!!!")
+                        print("New best policy!!!")
                         self.best_win_ratio = win_ratio
                         # update the best_policy
-                        self.policy_value_net.save_model('./best_policy.model')
+                        self.policy_value_net.save_model('model/best_policy.model')
                         if (self.best_win_ratio == 1.0 and
                                 self.pure_mcts_playout_num < 5000):
                             self.pure_mcts_playout_num += 1000

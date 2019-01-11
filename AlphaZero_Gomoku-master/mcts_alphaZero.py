@@ -1,13 +1,9 @@
 # -*- coding: utf-8 -*-
-"""
-Monte Carlo Tree Search in AlphaGo Zero style, which uses a policy-value
-network to guide the tree search and evaluate the leaf nodes
 
-@author: 某科学的软工小队
-"""
 
 import numpy as np
 import copy
+
 
 def softmax(x):
     probs = np.exp(x - np.max(x))
@@ -25,9 +21,9 @@ class TreeNode(object):
         self._parent = parent
         self._children = {}  # a map from action to TreeNode
         self._n_visits = 0
-        self._Q = 0
-        self._u = 0
-        self._P = prior_p
+        self._Q = 0          # action value
+        self._u = 0          # award
+        self._P = prior_p    # prior probability P
 
     def expand(self, action_priors):
         """Expand tree by creating new children.
@@ -39,38 +35,23 @@ class TreeNode(object):
                 self._children[action] = TreeNode(self, prob)
 
     def select(self, c_puct):
-        """Select action among children that gives maximum action value Q
-        plus bonus u(P).
-        Return: A tuple of (action, next_node)
-        """
+        # select the node that have max value of UCT
         return max(self._children.items(),
                    key=lambda act_node: act_node[1].get_value(c_puct))
 
     def update(self, leaf_value):
-        """Update node values from leaf evaluation.
-        leaf_value: the value of subtree evaluation from the current player's
-            perspective.
-        """
+        # Update node values from leaf evaluation.
         # Count visit.
         self._n_visits += 1
-        # Update Q, a running average of values for all visits.
+        # Update Q.
         self._Q += 1.0*(leaf_value - self._Q) / self._n_visits
 
     def update_recursive(self, leaf_value):
-        """Like a call to update(), but applied recursively for all ancestors.
-        """
-        # If it is not root, this node's parent should be updated first.
         if self._parent:
             self._parent.update_recursive(-leaf_value)
         self.update(leaf_value)
 
     def get_value(self, c_puct):
-        """Calculate and return the value for this node.
-        It is a combination of leaf evaluations Q, and this node's prior
-        adjusted for its visit count, u.
-        c_puct: a number in (0, inf) controlling the relative impact of
-            value Q, and prior probability P, on this node's score.
-        """
         self._u = (c_puct * self._P *
                    np.sqrt(self._parent._n_visits) / (1 + self._n_visits))
         return self._Q + self._u
@@ -84,18 +65,7 @@ class TreeNode(object):
 
 
 class MCTS(object):
-    """An implementation of Monte Carlo Tree Search."""
-
     def __init__(self, policy_value_fn, c_puct=5, n_playout=10000):
-        """
-        policy_value_fn: a function that takes in a board state and outputs
-            a list of (action, probability) tuples and also a score in [-1, 1]
-            (i.e. the expected value of the end game score from the current
-            player's perspective) for the current player.
-        c_puct: a number in (0, inf) that controls how quickly exploration
-            converges to the maximum-value policy. A higher value means
-            relying on the prior more.
-        """
         self._root = TreeNode(None, 1.0)
         self._policy = policy_value_fn
         self._c_puct = c_puct
@@ -114,9 +84,6 @@ class MCTS(object):
             action, node = node.select(self._c_puct)
             state.do_move(action)
 
-        # Evaluate the leaf using a network which outputs a list of
-        # (action, probability) tuples p and also a score v in [-1, 1]
-        # for the current player.
         action_probs, leaf_value = self._policy(state)
         # Check for end of game.
         end, winner = state.game_end()
@@ -135,11 +102,6 @@ class MCTS(object):
         node.update_recursive(-leaf_value)
 
     def get_move_probs(self, state, temp=1e-3):
-        """Run all playouts sequentially and return the available actions and
-        their corresponding probabilities.
-        state: the current game state
-        temp: temperature parameter in (0, 1] controls the level of exploration
-        """
         for n in range(self._n_playout):
             state_copy = copy.deepcopy(state)
             self._playout(state_copy)
@@ -153,9 +115,7 @@ class MCTS(object):
         return acts, act_probs
 
     def update_with_move(self, last_move):
-        """Step forward in the tree, keeping everything we already know
-        about the subtree.
-        """
+
         if last_move in self._root._children:
             self._root = self._root._children[last_move]
             self._root._parent = None
@@ -182,28 +142,23 @@ class MCTSPlayer(object):
 
     def get_action(self, board, temp=1e-3, return_prob=0):
         sensible_moves = board.availables
-        # the pi vector returned by MCTS as in the alphaGo Zero paper
         move_probs = np.zeros(board.width*board.height)
         if len(sensible_moves) > 0:
             acts, probs = self.mcts.get_move_probs(board, temp)
             move_probs[list(acts)] = probs
             if self._is_selfplay:
-                # add Dirichlet Noise for exploration (needed for
-                # self-play training)
+                # add Dirichlet Noise for exploration
                 move = np.random.choice(
                     acts,
                     p=0.75*probs + 0.25*np.random.dirichlet(0.3*np.ones(len(probs)))
                 )
-                # update the root node and reuse the search tree
+                # update the root node
                 self.mcts.update_with_move(move)
             else:
-                # with the default temp=1e-3, it is almost equivalent
-                # to choosing the move with the highest prob
+                # choosing the move with the highest prob
                 move = np.random.choice(acts, p=probs)
                 # reset the root node
                 self.mcts.update_with_move(-1)
-#                location = board.move_to_location(move)
-#                print("AI move: %d,%d\n" % (location[0], location[1]))
 
             if return_prob:
                 return move, move_probs
