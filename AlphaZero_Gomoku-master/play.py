@@ -60,7 +60,7 @@ def run():
         print(1111)
         # thread1 = threading.Thread(target=graphic.run, args=())
         best_policy = PolicyValueNet(width, height, model_file='./model/' + model_file)
-        mcts_player = MCTSPlayer(best_policy.policy_value_fn, c_puct=5, n_playout=200)
+        mcts_player = MCTSPlayer(best_policy.policy_value_fn, c_puct=5, n_playout=1200)
         human = Human(graphic)
         # set start_player=0 for human first
         thread2 = threading.Thread(target=game.start_play, args=(human, mcts_player, graphic, 1, 1))
